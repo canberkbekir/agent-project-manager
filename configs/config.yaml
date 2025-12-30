@@ -1,0 +1,34 @@
+api:
+  addr: ":3333"
+
+state:
+  sqlitePath: "data/state.db"
+
+queue:
+  workers: 2
+
+artifacts:
+  workDir: "data/workdir"
+
+llm:
+  provider: "ollama" # or "openai"
+  openai:
+    apiKey: ""
+    model: "gpt-4o-mini"
+  ollama:
+    baseURL: "http://127.0.0.1:11434"
+    model: "qwen2.5-coder:7b"
+
+logger:
+  level: "info"        # debug, info, warn, error, fatal
+  format: "text"       # text, json
+  output: "stdout"     # stdout, stderr, or file path (e.g., "logs/app.log")
+  reportCaller: false  # include caller information in logs
+
+obs:
+  tracing:
+    enabled: true      # Enable OpenTelemetry tracing
+    endpoint: "localhost:4318"        # OTLP endpoint (e.g., "localhost:4318" for HTTP, "none" to disable)
+  metrics:
+    enabled: true      # Enable OpenTelemetry metrics
+    endpoint: "localhost:4318"        # OTLP endpoint (e.g., "localhost:4318" for HTTP, "none" to disable)

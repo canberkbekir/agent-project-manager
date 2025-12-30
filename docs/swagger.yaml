@@ -1,0 +1,1315 @@
+basePath: /v1
+definitions:
+  api.Agent:
+    properties:
+      createdAt:
+        type: string
+      id:
+        type: string
+      lastSeen:
+        type: string
+      metadata:
+        additionalProperties: true
+        type: object
+      name:
+        type: string
+      status:
+        type: string
+    type: object
+  api.AgentListResponse:
+    properties:
+      agents:
+        items:
+          $ref: '#/definitions/api.Agent'
+        type: array
+    type: object
+  api.AgentStatus:
+    properties:
+      activeJobs:
+        type: integer
+      completedJobs:
+        type: integer
+      id:
+        type: string
+      isDraining:
+        type: boolean
+      lastSeen:
+        type: string
+      status:
+        type: string
+    type: object
+  api.Artifact:
+    properties:
+      createdAt:
+        type: string
+      id:
+        type: string
+      jobId:
+        type: string
+      name:
+        type: string
+      path:
+        type: string
+      runId:
+        type: string
+      size:
+        type: integer
+      type:
+        $ref: '#/definitions/api.ArtifactType'
+    type: object
+  api.ArtifactListResponse:
+    properties:
+      artifacts:
+        items:
+          $ref: '#/definitions/api.Artifact'
+        type: array
+      cursor:
+        type: string
+      hasMore:
+        type: boolean
+    type: object
+  api.ArtifactType:
+    enum:
+    - pdf
+    - pptx
+    - zip
+    - log
+    type: string
+    x-enum-varnames:
+    - ArtifactTypePDF
+    - ArtifactTypePPTX
+    - ArtifactTypeZIP
+    - ArtifactTypeLog
+  api.CreateJobRequest:
+    properties:
+      input:
+        additionalProperties: true
+        type: object
+      meta:
+        additionalProperties: true
+        type: object
+      workflow:
+        type: string
+    type: object
+  api.CreateJobResponse:
+    properties:
+      id:
+        type: string
+    type: object
+  api.CreateRunRequest:
+    properties:
+      jobId:
+        type: string
+      params:
+        additionalProperties: true
+        type: object
+    type: object
+  api.CreateRunResponse:
+    properties:
+      id:
+        type: string
+    type: object
+  api.Job:
+    properties:
+      completedAt:
+        type: string
+      createdAt:
+        type: string
+      error:
+        type: string
+      id:
+        type: string
+      input:
+        additionalProperties: true
+        type: object
+      meta:
+        additionalProperties: true
+        type: object
+      startedAt:
+        type: string
+      status:
+        $ref: '#/definitions/api.JobStatus'
+      updatedAt:
+        type: string
+      workflow:
+        type: string
+    type: object
+  api.JobListResponse:
+    properties:
+      cursor:
+        type: string
+      hasMore:
+        type: boolean
+      jobs:
+        items:
+          $ref: '#/definitions/api.Job'
+        type: array
+    type: object
+  api.JobLogsResponse:
+    properties:
+      jobId:
+        type: string
+      logs:
+        items:
+          $ref: '#/definitions/api.LogEntry'
+        type: array
+    type: object
+  api.JobResult:
+    properties:
+      artifacts:
+        description: artifact IDs
+        items:
+          type: string
+        type: array
+      completedAt:
+        type: string
+      jobId:
+        type: string
+      result:
+        additionalProperties: true
+        type: object
+      status:
+        $ref: '#/definitions/api.JobStatus'
+    type: object
+  api.JobStatus:
+    enum:
+    - queued
+    - running
+    - succeeded
+    - failed
+    - cancelled
+    type: string
+    x-enum-varnames:
+    - JobStatusQueued
+    - JobStatusRunning
+    - JobStatusSucceeded
+    - JobStatusFailed
+    - JobStatusCancelled
+  api.JobStep:
+    properties:
+      completedAt:
+        type: string
+      createdAt:
+        type: string
+      error:
+        type: string
+      id:
+        type: string
+      input:
+        additionalProperties: true
+        type: object
+      jobId:
+        type: string
+      name:
+        type: string
+      output:
+        additionalProperties: true
+        type: object
+      startedAt:
+        type: string
+      status:
+        $ref: '#/definitions/api.StepStatus'
+      updatedAt:
+        type: string
+    type: object
+  api.LogEntry:
+    properties:
+      level:
+        type: string
+      message:
+        type: string
+      stepId:
+        type: string
+      timestamp:
+        type: string
+    type: object
+  api.LoginRequest:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+  api.LoginResponse:
+    properties:
+      accessToken:
+        type: string
+      expiresIn:
+        type: integer
+    type: object
+  api.QueueItem:
+    properties:
+      completedAt:
+        type: string
+      createdAt:
+        type: string
+      data:
+        additionalProperties: true
+        type: object
+      id:
+        type: string
+      jobId:
+        type: string
+      leasedAt:
+        type: string
+      state:
+        $ref: '#/definitions/api.QueueState'
+      updatedAt:
+        type: string
+    type: object
+  api.QueueItemListResponse:
+    properties:
+      cursor:
+        type: string
+      hasMore:
+        type: boolean
+      items:
+        items:
+          $ref: '#/definitions/api.QueueItem'
+        type: array
+    type: object
+  api.QueueState:
+    enum:
+    - pending
+    - leased
+    - done
+    - dead
+    type: string
+    x-enum-varnames:
+    - QueueStatePending
+    - QueueStateLeased
+    - QueueStateDone
+    - QueueStateDead
+  api.QueueStats:
+    properties:
+      dead:
+        type: integer
+      done:
+        type: integer
+      leased:
+        type: integer
+      pending:
+        type: integer
+      total:
+        type: integer
+    type: object
+  api.RefreshRequest:
+    properties:
+      refreshToken:
+        type: string
+    type: object
+  api.RequeueRequest:
+    properties:
+      jobId:
+        type: string
+      reason:
+        type: string
+    type: object
+  api.Run:
+    properties:
+      completedAt:
+        type: string
+      createdAt:
+        type: string
+      error:
+        type: string
+      id:
+        type: string
+      jobId:
+        type: string
+      params:
+        additionalProperties: true
+        type: object
+      startedAt:
+        type: string
+      status:
+        $ref: '#/definitions/api.RunStatus'
+      updatedAt:
+        type: string
+    type: object
+  api.RunListResponse:
+    properties:
+      cursor:
+        type: string
+      hasMore:
+        type: boolean
+      runs:
+        items:
+          $ref: '#/definitions/api.Run'
+        type: array
+    type: object
+  api.RunStatus:
+    enum:
+    - pending
+    - running
+    - succeeded
+    - failed
+    - cancelled
+    type: string
+    x-enum-varnames:
+    - RunStatusPending
+    - RunStatusRunning
+    - RunStatusSucceeded
+    - RunStatusFailed
+    - RunStatusCancelled
+  api.StepStatus:
+    enum:
+    - pending
+    - running
+    - succeeded
+    - failed
+    - skipped
+    type: string
+    x-enum-varnames:
+    - StepStatusPending
+    - StepStatusRunning
+    - StepStatusSucceeded
+    - StepStatusFailed
+    - StepStatusSkipped
+  api.ValidateWorkflowRequest:
+    properties:
+      input:
+        additionalProperties: true
+        type: object
+      workflow:
+        type: string
+    type: object
+  api.ValidateWorkflowResponse:
+    properties:
+      errors:
+        items:
+          type: string
+        type: array
+      valid:
+        type: boolean
+    type: object
+  api.VersionResponse:
+    properties:
+      commit:
+        type: string
+      name:
+        type: string
+      version:
+        type: string
+    type: object
+  api.Workflow:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+      schema:
+        additionalProperties: true
+        type: object
+      version:
+        type: string
+    type: object
+  api.WorkflowListResponse:
+    properties:
+      workflows:
+        items:
+          $ref: '#/definitions/api.Workflow'
+        type: array
+    type: object
+host: localhost:3333
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: REST API for the Agent Project Manager daemon. Orchestrates agent-based
+    LLM workflows.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Agent Project Manager API
+  version: "1.0"
+paths:
+  /agents:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of all registered agents/workers
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.AgentListResponse'
+      summary: List agents
+      tags:
+      - agents
+  /agents/{agentId}:
+    get:
+      consumes:
+      - application/json
+      description: Get detailed information about a specific agent
+      parameters:
+      - description: Agent ID
+        in: path
+        name: agentId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.Agent'
+        "404":
+          description: Agent not found
+          schema:
+            type: string
+      summary: Get agent details
+      tags:
+      - agents
+  /agents/{agentId}/drain:
+    post:
+      consumes:
+      - application/json
+      description: Stop an agent from accepting new work (drain mode)
+      parameters:
+      - description: Agent ID
+        in: path
+        name: agentId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "404":
+          description: Agent not found
+          schema:
+            type: string
+      summary: Drain agent
+      tags:
+      - agents
+  /agents/{agentId}/resume:
+    post:
+      consumes:
+      - application/json
+      description: Resume an agent to accept new work
+      parameters:
+      - description: Agent ID
+        in: path
+        name: agentId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "404":
+          description: Agent not found
+          schema:
+            type: string
+      summary: Resume agent
+      tags:
+      - agents
+  /agents/{agentId}/status:
+    get:
+      consumes:
+      - application/json
+      description: Get status information for a specific agent
+      parameters:
+      - description: Agent ID
+        in: path
+        name: agentId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.AgentStatus'
+        "404":
+          description: Agent not found
+          schema:
+            type: string
+      summary: Get agent status
+      tags:
+      - agents
+  /artifacts:
+    get:
+      consumes:
+      - application/json
+      description: Get a paginated list of artifacts with optional filtering
+      parameters:
+      - description: Filter by job ID
+        in: query
+        name: jobId
+        type: string
+      - description: Filter by run ID
+        in: query
+        name: runId
+        type: string
+      - description: Maximum number of artifacts to return
+        in: query
+        name: limit
+        type: integer
+      - description: Cursor for pagination
+        in: query
+        name: cursor
+        type: string
+      - description: Filter by artifact type (pdf|pptx|zip|log)
+        in: query
+        name: type
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ArtifactListResponse'
+      summary: List artifacts
+      tags:
+      - artifacts
+  /artifacts/{artifactId}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete an artifact
+      parameters:
+      - description: Artifact ID
+        in: path
+        name: artifactId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+          schema:
+            type: string
+        "404":
+          description: Artifact not found
+          schema:
+            type: string
+      summary: Delete artifact
+      tags:
+      - artifacts
+    get:
+      consumes:
+      - application/json
+      description: Get metadata for a specific artifact
+      parameters:
+      - description: Artifact ID
+        in: path
+        name: artifactId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.Artifact'
+        "404":
+          description: Artifact not found
+          schema:
+            type: string
+      summary: Get artifact metadata
+      tags:
+      - artifacts
+  /artifacts/{artifactId}/download:
+    get:
+      consumes:
+      - application/json
+      description: Download the artifact file
+      parameters:
+      - description: Artifact ID
+        in: path
+        name: artifactId
+        required: true
+        type: string
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: Artifact file
+          schema:
+            type: file
+        "404":
+          description: Artifact not found
+          schema:
+            type: string
+      summary: Download artifact
+      tags:
+      - artifacts
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate and receive access token
+      parameters:
+      - description: Login credentials
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/api.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.LoginResponse'
+        "400":
+          description: Invalid request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+      summary: Login
+      tags:
+      - auth
+  /auth/logout:
+    post:
+      consumes:
+      - application/json
+      description: Logout and invalidate the current session
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: Logout
+      tags:
+      - auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Refresh an access token using a refresh token
+      parameters:
+      - description: Refresh token request
+        in: body
+        name: refresh
+        required: true
+        schema:
+          $ref: '#/definitions/api.RefreshRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.LoginResponse'
+        "400":
+          description: Invalid request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+      summary: Refresh token
+      tags:
+      - auth
+  /healthz:
+    get:
+      consumes:
+      - application/json
+      description: Returns 200 OK if the service is alive
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: Health check (liveness)
+      tags:
+      - system
+  /jobs:
+    get:
+      consumes:
+      - application/json
+      description: Get a paginated list of jobs with optional filtering
+      parameters:
+      - description: Maximum number of jobs to return
+        in: query
+        name: limit
+        type: integer
+      - description: Cursor for pagination
+        in: query
+        name: cursor
+        type: string
+      - description: Filter by status (queued|running|succeeded|failed)
+        in: query
+        name: status
+        type: string
+      - description: Filter by workflow name
+        in: query
+        name: workflow
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.JobListResponse'
+      summary: List jobs
+      tags:
+      - jobs
+    post:
+      consumes:
+      - application/json
+      description: Submit a new job to be processed
+      parameters:
+      - description: Job creation request
+        in: body
+        name: job
+        required: true
+        schema:
+          $ref: '#/definitions/api.CreateJobRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/api.CreateJobResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            type: string
+      summary: Create a new job
+      tags:
+      - jobs
+  /jobs/{jobId}:
+    delete:
+      consumes:
+      - application/json
+      description: Cancel a running or queued job
+      parameters:
+      - description: Job ID
+        in: path
+        name: jobId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Accepted
+          schema:
+            type: string
+        "404":
+          description: Job not found
+          schema:
+            type: string
+      summary: Cancel a job
+      tags:
+      - jobs
+    get:
+      consumes:
+      - application/json
+      description: Get detailed information about a specific job
+      parameters:
+      - description: Job ID
+        in: path
+        name: jobId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.Job'
+        "404":
+          description: Job not found
+          schema:
+            type: string
+      summary: Get job details
+      tags:
+      - jobs
+  /jobs/{jobId}/events:
+    get:
+      consumes:
+      - application/json
+      description: Stream job status updates via Server-Sent Events (SSE)
+      parameters:
+      - description: Job ID
+        in: path
+        name: jobId
+        required: true
+        type: string
+      produces:
+      - text/event-stream
+      responses:
+        "200":
+          description: Event stream
+          schema:
+            type: string
+      summary: Stream job events
+      tags:
+      - jobs
+  /jobs/{jobId}/logs:
+    get:
+      consumes:
+      - application/json
+      description: Get aggregated logs for a job
+      parameters:
+      - description: Job ID
+        in: path
+        name: jobId
+        required: true
+        type: string
+      - description: Number of log lines to return
+        in: query
+        name: tail
+        type: integer
+      - description: RFC3339 timestamp to filter logs from
+        in: query
+        name: since
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.JobLogsResponse'
+        "404":
+          description: Job not found
+          schema:
+            type: string
+      summary: Get job logs
+      tags:
+      - jobs
+  /jobs/{jobId}/result:
+    get:
+      consumes:
+      - application/json
+      description: Get the latest result summary for a job
+      parameters:
+      - description: Job ID
+        in: path
+        name: jobId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.JobResult'
+        "404":
+          description: Job not found
+          schema:
+            type: string
+      summary: Get job result
+      tags:
+      - jobs
+  /jobs/{jobId}/retry:
+    post:
+      consumes:
+      - application/json
+      description: Retry a failed or cancelled job
+      parameters:
+      - description: Job ID
+        in: path
+        name: jobId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.CreateJobResponse'
+        "404":
+          description: Job not found
+          schema:
+            type: string
+      summary: Retry a job
+      tags:
+      - jobs
+  /jobs/{jobId}/steps:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of workflow steps for a job
+      parameters:
+      - description: Job ID
+        in: path
+        name: jobId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/api.JobStep'
+            type: array
+        "404":
+          description: Job not found
+          schema:
+            type: string
+      summary: List job steps
+      tags:
+      - jobs
+  /jobs/{jobId}/steps/{stepId}:
+    get:
+      consumes:
+      - application/json
+      description: Get detailed information about a workflow step
+      parameters:
+      - description: Job ID
+        in: path
+        name: jobId
+        required: true
+        type: string
+      - description: Step ID
+        in: path
+        name: stepId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.JobStep'
+        "404":
+          description: Step not found
+          schema:
+            type: string
+      summary: Get step details
+      tags:
+      - jobs
+  /jobs/{jobId}/steps/{stepId}/logs:
+    get:
+      consumes:
+      - application/json
+      description: Get logs for a specific workflow step
+      parameters:
+      - description: Job ID
+        in: path
+        name: jobId
+        required: true
+        type: string
+      - description: Step ID
+        in: path
+        name: stepId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.JobLogsResponse'
+        "404":
+          description: Step not found
+          schema:
+            type: string
+      summary: Get step logs
+      tags:
+      - jobs
+  /queue:
+    get:
+      consumes:
+      - application/json
+      description: Get queue statistics and metrics
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.QueueStats'
+      summary: Get queue statistics
+      tags:
+      - queue
+  /queue/items:
+    get:
+      consumes:
+      - application/json
+      description: Get a paginated list of queue items with optional filtering
+      parameters:
+      - description: Maximum number of items to return
+        in: query
+        name: limit
+        type: integer
+      - description: Cursor for pagination
+        in: query
+        name: cursor
+        type: string
+      - description: Filter by state (pending|leased|done|dead)
+        in: query
+        name: state
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.QueueItemListResponse'
+      summary: List queue items
+      tags:
+      - queue
+  /queue/requeue:
+    post:
+      consumes:
+      - application/json
+      description: Requeue a job in the queue
+      parameters:
+      - description: Requeue request
+        in: body
+        name: requeue
+        required: true
+        schema:
+          $ref: '#/definitions/api.RequeueRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Invalid request
+          schema:
+            type: string
+      summary: Requeue a job
+      tags:
+      - queue
+  /readyz:
+    get:
+      consumes:
+      - application/json
+      description: Returns 200 OK if the service is ready to accept requests
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: Readiness check
+      tags:
+      - system
+  /runs:
+    get:
+      consumes:
+      - application/json
+      description: Get a paginated list of runs with optional filtering
+      parameters:
+      - description: Maximum number of runs to return
+        in: query
+        name: limit
+        type: integer
+      - description: Cursor for pagination
+        in: query
+        name: cursor
+        type: string
+      - description: Filter by status
+        in: query
+        name: status
+        type: string
+      - description: Filter by job ID
+        in: query
+        name: jobId
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.RunListResponse'
+      summary: List runs
+      tags:
+      - runs
+    post:
+      consumes:
+      - application/json
+      description: Start a new run for a job
+      parameters:
+      - description: Run creation request
+        in: body
+        name: run
+        required: true
+        schema:
+          $ref: '#/definitions/api.CreateRunRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/api.CreateRunResponse'
+        "400":
+          description: Invalid request
+          schema:
+            type: string
+      summary: Create a new run
+      tags:
+      - runs
+  /runs/{runId}:
+    delete:
+      consumes:
+      - application/json
+      description: Cancel a running or pending run
+      parameters:
+      - description: Run ID
+        in: path
+        name: runId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Accepted
+          schema:
+            type: string
+        "404":
+          description: Run not found
+          schema:
+            type: string
+      summary: Cancel a run
+      tags:
+      - runs
+    get:
+      consumes:
+      - application/json
+      description: Get detailed information about a specific run
+      parameters:
+      - description: Run ID
+        in: path
+        name: runId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.Run'
+        "404":
+          description: Run not found
+          schema:
+            type: string
+      summary: Get run details
+      tags:
+      - runs
+  /version:
+    get:
+      consumes:
+      - application/json
+      description: Returns the service name, version, and commit information
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.VersionResponse'
+      summary: Get version information
+      tags:
+      - system
+  /workflows:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of all available workflows
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.WorkflowListResponse'
+      summary: List workflows
+      tags:
+      - workflows
+  /workflows/{name}:
+    get:
+      consumes:
+      - application/json
+      description: Get schema and metadata for a specific workflow
+      parameters:
+      - description: Workflow name
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.Workflow'
+        "404":
+          description: Workflow not found
+          schema:
+            type: string
+      summary: Get workflow details
+      tags:
+      - workflows
+  /workflows/validate:
+    post:
+      consumes:
+      - application/json
+      description: Validate input parameters for a workflow
+      parameters:
+      - description: Workflow validation request
+        in: body
+        name: workflow
+        required: true
+        schema:
+          $ref: '#/definitions/api.ValidateWorkflowRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ValidateWorkflowResponse'
+        "400":
+          description: Invalid request
+          schema:
+            type: string
+      summary: Validate workflow input
+      tags:
+      - workflows
+schemes:
+- http
+- https
+swagger: "2.0"
