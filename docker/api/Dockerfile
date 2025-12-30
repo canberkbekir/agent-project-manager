@@ -4,6 +4,12 @@ FROM golang:1.24-alpine AS builder
 # Install build dependencies
 RUN apk add --no-cache git gcc musl-dev
 
+# Install swag for Swagger documentation generation
+# Get GOPATH and add to PATH for swag command
+RUN go install github.com/swaggo/swag/cmd/swag@latest && \
+    GOPATH=$(go env GOPATH) && \
+    echo "export PATH=\$PATH:\$GOPATH/bin" >> /root/.profile
+
 # Set working directory
 WORKDIR /build
 
@@ -13,6 +19,11 @@ RUN go mod download
 
 # Copy source code
 COPY . .
+
+# Generate Swagger documentation
+# Use full path to swag or source profile to get PATH
+RUN GOPATH=$(go env GOPATH) && \
+    $GOPATH/bin/swag init -g cmd/agentd/main.go -o docs --parseDependency --parseInternal
 
 # Build the application
 RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build \
