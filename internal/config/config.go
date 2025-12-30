@@ -85,6 +85,9 @@ func Load() (Config, error) {
 	if configPath == "" {
 		configPath = DefaultPath
 	}
+	// Log which config file is being used (for debugging)
+	// Note: This will only work if logger is initialized, but config loads before logger
+	// So we'll just return the config and let the caller log if needed
 	return loadFrom(configPath)
 }
 

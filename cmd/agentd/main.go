@@ -52,10 +52,31 @@ func main() {
 
 	logger.Init()
 
-	// Initialize database store
-	store, err := state.NewStore(cfg.State.ConnectionString)
-	if err != nil {
-		logger.Fatalf("agentd: failed to initialize database store: %v", err)
+	// Log config path for debugging
+	configPath := os.Getenv("CONFIG_PATH")
+	if configPath == "" {
+		configPath = "configs/config.yaml"
+	}
+	logger.Infof("agentd: loaded config from %s", configPath)
+	logger.Infof("agentd: database connection string: %s", maskConnectionString(cfg.State.ConnectionString))
+
+	// Initialize database store with retry mechanism
+	var store state.Store
+	maxRetries := 10
+	retryDelay := 2 * time.Second
+	for i := 0; i < maxRetries; i++ {
+		var err error
+		store, err = state.NewStore(cfg.State.ConnectionString)
+		if err == nil {
+			logger.Info("agentd: successfully connected to database")
+			break
+		}
+		if i < maxRetries-1 {
+			logger.Warnf("agentd: failed to connect to database (attempt %d/%d): %v, retrying in %v...", i+1, maxRetries, err, retryDelay)
+			time.Sleep(retryDelay)
+		} else {
+			logger.Fatalf("agentd: failed to initialize database store after %d attempts: %v", maxRetries, err)
+		}
 	}
 	defer func() {
 		if err := store.Close(); err != nil {
@@ -122,4 +143,36 @@ func main() {
 	}
 
 	logger.Info("agentd: server exited")
+}
+
+// maskConnectionString masks the password in connection string for logging
+func maskConnectionString(connStr string) string {
+	// Simple masking: replace password part
+	// Format: postgres://user:password@host:port/db
+	// We'll just show user@host:port/db
+	if len(connStr) < 10 {
+		return "***"
+	}
+	// Find @ symbol and show only user@host part
+	atIdx := -1
+	for i := 0; i < len(connStr); i++ {
+		if connStr[i] == '@' {
+			atIdx = i
+			break
+		}
+	}
+	if atIdx > 0 {
+		// Find : before @ to mask password
+		colonIdx := -1
+		for i := 0; i < atIdx; i++ {
+			if connStr[i] == ':' {
+				colonIdx = i
+				break
+			}
+		}
+		if colonIdx > 0 {
+			return connStr[:colonIdx+1] + "***" + connStr[atIdx:]
+		}
+	}
+	return "***"
 }
