@@ -7,10 +7,11 @@ ENV GF_SECURITY_ADMIN_PASSWORD=admin
 ENV GF_INSTALL_PLUGINS=""
 
 # Copy custom configuration if needed
-# COPY grafana.ini /etc/grafana/grafana.ini
+# COPY docker/grafana/grafana.ini /etc/grafana/grafana.ini
 
 # Copy provisioning files for datasources and dashboards
-COPY provisioning/ /etc/grafana/provisioning/
+# Build context is project root, so use relative path
+COPY docker/grafana/provisioning/ /etc/grafana/provisioning/
 
 # Expose Grafana port
 EXPOSE 3000

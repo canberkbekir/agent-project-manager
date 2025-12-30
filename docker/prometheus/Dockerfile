@@ -5,7 +5,8 @@ FROM prom/prometheus:latest
 WORKDIR /etc/prometheus
 
 # Copy Prometheus configuration
-COPY prometheus.yml /etc/prometheus/prometheus.yml
+# Build context is project root, so use relative path
+COPY docker/prometheus/prometheus.yml /etc/prometheus/prometheus.yml
 
 # Create directory for data
 RUN mkdir -p /prometheus && \
