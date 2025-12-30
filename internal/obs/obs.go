@@ -8,11 +8,13 @@ import (
 )
 
 // Init initializes OpenTelemetry tracing and metrics
-func Init(cfg config.Config) error {
+// Returns the Prometheus metrics path if Prometheus is enabled, empty string otherwise
+func Init(cfg config.Config) (string, error) {
 	serviceName := "agentd"
 	serviceVersion := "1.0.0"
 
 	var endpoint string
+	var prometheusPath string
 
 	// Initialize tracing if enabled
 	if cfg.Obs.Tracing.Enabled {
@@ -22,25 +24,39 @@ func Init(cfg config.Config) error {
 		}
 		tp, err := InitTracing(serviceName, serviceVersion, endpoint)
 		if err != nil {
-			return fmt.Errorf("failed to initialize tracing: %w", err)
+			return "", fmt.Errorf("failed to initialize tracing: %w", err)
 		}
 		_ = tp // tracerProvider is stored globally
 	}
 
 	// Initialize metrics if enabled
 	if cfg.Obs.Metrics.Enabled {
-		endpoint = cfg.Obs.Metrics.Endpoint
-		if endpoint == "" {
-			endpoint = "none" // Disable if not configured
+		// Initialize Prometheus metrics if enabled (for Grafana)
+		if cfg.Obs.Metrics.PrometheusEnabled {
+			_, err := InitPrometheusMetrics(serviceName, serviceVersion)
+			if err != nil {
+				return "", fmt.Errorf("failed to initialize Prometheus metrics: %w", err)
+			}
+			// Get Prometheus path from config, default to /metrics
+			prometheusPath = cfg.Obs.Metrics.PrometheusPath
+			if prometheusPath == "" {
+				prometheusPath = "/metrics"
+			}
+		} else {
+			// Initialize OTLP metrics if Prometheus is not enabled
+			endpoint = cfg.Obs.Metrics.Endpoint
+			if endpoint == "" {
+				endpoint = "none" // Disable if not configured
+			}
+			mp, err := InitMetrics(serviceName, serviceVersion, endpoint)
+			if err != nil {
+				return "", fmt.Errorf("failed to initialize metrics: %w", err)
+			}
+			_ = mp // metricProvider is stored globally
 		}
-		mp, err := InitMetrics(serviceName, serviceVersion, endpoint)
-		if err != nil {
-			return fmt.Errorf("failed to initialize metrics: %w", err)
-		}
-		_ = mp // metricProvider is stored globally
 	}
 
-	return nil
+	return prometheusPath, nil
 }
 
 // Shutdown gracefully shuts down OpenTelemetry

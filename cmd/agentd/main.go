@@ -31,6 +31,7 @@ import (
 	"agent-project-manager/internal/config"
 	"agent-project-manager/internal/logger"
 	"agent-project-manager/internal/obs"
+	"agent-project-manager/internal/state"
 
 	_ "agent-project-manager/docs" // Swagger docs
 )
@@ -51,13 +52,36 @@ func main() {
 
 	logger.Init()
 
+	// Initialize database store
+	store, err := state.NewStore(cfg.State.ConnectionString)
+	if err != nil {
+		logger.Fatalf("agentd: failed to initialize database store: %v", err)
+	}
+	defer func() {
+		if err := store.Close(); err != nil {
+			logger.Errorf("agentd: failed to close database store: %v", err)
+		}
+	}()
+
+	// Run database migrations
+	if err := state.RunMigrations(store, "migrations"); err != nil {
+		logger.Fatalf("agentd: failed to run database migrations: %v", err)
+	}
+	logger.Info("agentd: database migrations completed successfully")
+
 	// Initialize OpenTelemetry
-	if err := obs.Init(cfg); err != nil {
+	prometheusPath, err := obs.Init(cfg)
+	if err != nil {
 		logger.Warnf("agentd: failed to initialize OpenTelemetry: %v", err)
 	} else {
 		// Enable tracing middleware if tracing is enabled
 		if cfg.Obs.Tracing.Enabled {
 			api.EnableTracing = true
+		}
+		// Set Prometheus metrics path if enabled
+		if prometheusPath != "" {
+			api.PrometheusMetricsPath = prometheusPath
+			logger.Infof("agentd: Prometheus metrics endpoint enabled at %s", prometheusPath)
 		}
 		defer func() {
 			if err := obs.Shutdown(context.Background()); err != nil {
@@ -68,7 +92,7 @@ func main() {
 
 	srv := &http.Server{
 		Addr:    cfg.API.Addr,
-		Handler: api.Router(),
+		Handler: api.Router(store),
 	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)

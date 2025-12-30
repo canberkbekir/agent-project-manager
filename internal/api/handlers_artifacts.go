@@ -3,8 +3,10 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/go-chi/chi/v5"
+	"agent-project-manager/internal/repository"
 )
 
 // handleListArtifacts handles GET /artifacts
@@ -20,18 +22,54 @@ import (
 // @Param        type    query     string  false  "Filter by artifact type (pdf|pptx|zip|log)"
 // @Success      200     {object}  ArtifactListResponse
 // @Router       /artifacts [get]
-func handleListArtifacts(w http.ResponseWriter, r *http.Request) {
-	// TODO: Parse query parameters: jobId, runId, limit, cursor, type
-	// jobId := r.URL.Query().Get("jobId")
-	// runId := r.URL.Query().Get("runId")
-	// limit := r.URL.Query().Get("limit")
-	// cursor := r.URL.Query().Get("cursor")
-	// artifactType := r.URL.Query().Get("type")
+func handleListArtifacts(repo repository.IArtifactRepository) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Parse query parameters
+		jobID := r.URL.Query().Get("jobId")
+		runID := r.URL.Query().Get("runId")
+		limitStr := r.URL.Query().Get("limit")
+		cursor := r.URL.Query().Get("cursor")
 
-	// TODO: Implement artifact listing logic
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode([]interface{}{})
+		limit := 50 // default
+		if limitStr != "" {
+			if parsed, err := strconv.Atoi(limitStr); err == nil && parsed > 0 {
+				limit = parsed
+			}
+		}
+
+		// Get artifacts from repository
+		stateArtifacts, nextCursor, err := repo.ListArtifacts(jobID, runID, limit, cursor)
+		if err != nil {
+			http.Error(w, "Failed to list artifacts: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		// Convert state models to API models
+		artifacts := make([]Artifact, len(stateArtifacts))
+		for i, sa := range stateArtifacts {
+			artifactType, _ := ArtifactTypeFromString(sa.Type)
+			artifacts[i] = Artifact{
+				ID:        sa.ID,
+				JobID:     sa.JobID,
+				RunID:     sa.RunID,
+				Type:      artifactType,
+				Name:      sa.Name,
+				Size:      sa.Size,
+				Path:      sa.Path,
+				CreatedAt: sa.CreatedAt,
+			}
+		}
+
+		response := ArtifactListResponse{
+			Artifacts: artifacts,
+			Cursor:    nextCursor,
+			HasMore:   nextCursor != "",
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(response)
+	}
 }
 
 // handleGetArtifact handles GET /artifacts/{artifactId}
@@ -44,15 +82,34 @@ func handleListArtifacts(w http.ResponseWriter, r *http.Request) {
 // @Success      200         {object}  Artifact
 // @Failure      404         {string}  string  "Artifact not found"
 // @Router       /artifacts/{artifactId} [get]
-func handleGetArtifact(w http.ResponseWriter, r *http.Request) {
-	artifactId := chi.URLParam(r, "artifactId")
+func handleGetArtifact(repo repository.IArtifactRepository) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		artifactId := chi.URLParam(r, "artifactId")
 
-	// TODO: Implement artifact metadata retrieval
-	_ = artifactId
+		// Get artifact from repository
+		sa, err := repo.GetArtifact(artifactId)
+		if err != nil {
+			http.Error(w, "Artifact not found", http.StatusNotFound)
+			return
+		}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]interface{}{})
+		// Convert state model to API model
+		artifactType, _ := ArtifactTypeFromString(sa.Type)
+		artifact := Artifact{
+			ID:        sa.ID,
+			JobID:     sa.JobID,
+			RunID:     sa.RunID,
+			Type:      artifactType,
+			Name:      sa.Name,
+			Size:      sa.Size,
+			Path:      sa.Path,
+			CreatedAt: sa.CreatedAt,
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(artifact)
+	}
 }
 
 // handleDownloadArtifact handles GET /artifacts/{artifactId}/download
@@ -65,14 +122,23 @@ func handleGetArtifact(w http.ResponseWriter, r *http.Request) {
 // @Success      200         {file}    file    "Artifact file"
 // @Failure      404         {string}  string  "Artifact not found"
 // @Router       /artifacts/{artifactId}/download [get]
-func handleDownloadArtifact(w http.ResponseWriter, r *http.Request) {
-	artifactId := chi.URLParam(r, "artifactId")
+func handleDownloadArtifact(repo repository.IArtifactRepository) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		artifactId := chi.URLParam(r, "artifactId")
 
-	// TODO: Implement artifact file streaming
-	_ = artifactId
+		// Get artifact from repository
+		sa, err := repo.GetArtifact(artifactId)
+		if err != nil {
+			http.Error(w, "Artifact not found", http.StatusNotFound)
+			return
+		}
 
-	w.Header().Set("Content-Type", "application/octet-stream")
-	w.WriteHeader(http.StatusOK)
+		// TODO: Implement artifact file streaming from sa.Path
+		_ = sa
+
+		w.Header().Set("Content-Type", "application/octet-stream")
+		w.WriteHeader(http.StatusOK)
+	}
 }
 
 // handleDeleteArtifact handles DELETE /artifacts/{artifactId}
@@ -85,12 +151,19 @@ func handleDownloadArtifact(w http.ResponseWriter, r *http.Request) {
 // @Success      204         {string}  string  "No Content"
 // @Failure      404         {string}  string  "Artifact not found"
 // @Router       /artifacts/{artifactId} [delete]
-func handleDeleteArtifact(w http.ResponseWriter, r *http.Request) {
-	artifactId := chi.URLParam(r, "artifactId")
+func handleDeleteArtifact(repo repository.IArtifactRepository) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		artifactId := chi.URLParam(r, "artifactId")
 
-	// TODO: Implement artifact cleanup logic
-	_ = artifactId
+		// Delete artifact from repository
+		if err := repo.DeleteArtifact(artifactId); err != nil {
+			http.Error(w, "Artifact not found", http.StatusNotFound)
+			return
+		}
 
-	w.WriteHeader(http.StatusNoContent)
+		// TODO: Implement artifact file cleanup logic
+
+		w.WriteHeader(http.StatusNoContent)
+	}
 }
 

@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"agent-project-manager/internal/repository"
 )
 
 // handleListAgents handles GET /agents
@@ -15,11 +16,37 @@ import (
 // @Produce      json
 // @Success      200  {object}  AgentListResponse
 // @Router       /agents [get]
-func handleListAgents(w http.ResponseWriter, r *http.Request) {
-	// TODO: Implement agent/worker listing logic
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode([]interface{}{})
+func handleListAgents(repo repository.IAgentRepository) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+	// Get agents from repository
+	stateAgents, err := repo.ListAgents()
+	if err != nil {
+		http.Error(w, "Failed to list agents: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Convert state models to API models
+	agents := make([]Agent, len(stateAgents))
+	for i, sa := range stateAgents {
+		agents[i] = Agent{
+			ID:        sa.ID,
+			Name:      sa.Name,
+			Status:    sa.Status,
+			Metadata:  map[string]interface{}(sa.Metadata),
+			LastSeen:  sa.LastSeen,
+			CreatedAt: sa.CreatedAt,
+		}
+	}
+
+	response := AgentListResponse{
+		Agents: agents,
+	}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(response)
+	}
 }
 
 // handleGetAgent handles GET /agents/{agentId}
@@ -32,15 +59,31 @@ func handleListAgents(w http.ResponseWriter, r *http.Request) {
 // @Success      200      {object}  Agent
 // @Failure      404      {string}  string  "Agent not found"
 // @Router       /agents/{agentId} [get]
-func handleGetAgent(w http.ResponseWriter, r *http.Request) {
-	agentID := chi.URLParam(r, "agentId")
+func handleGetAgent(repo repository.IAgentRepository) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		agentID := chi.URLParam(r, "agentId")
 
-	// TODO: Implement agent details retrieval
-	_ = agentID
+		// Get agent from repository
+		sa, err := repo.GetAgent(agentID)
+		if err != nil {
+			http.Error(w, "Agent not found", http.StatusNotFound)
+			return
+		}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]interface{}{})
+		// Convert state model to API model
+		agent := Agent{
+			ID:        sa.ID,
+			Name:      sa.Name,
+			Status:    sa.Status,
+			Metadata:  map[string]interface{}(sa.Metadata),
+			LastSeen:  sa.LastSeen,
+			CreatedAt: sa.CreatedAt,
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(agent)
+	}
 }
 
 // handleGetAgentStatus handles GET /agents/{agentId}/status
@@ -53,15 +96,17 @@ func handleGetAgent(w http.ResponseWriter, r *http.Request) {
 // @Success      200      {object}  AgentStatus
 // @Failure      404      {string}  string  "Agent not found"
 // @Router       /agents/{agentId}/status [get]
-func handleGetAgentStatus(w http.ResponseWriter, r *http.Request) {
-	agentID := chi.URLParam(r, "agentId")
+func handleGetAgentStatus(repo repository.IAgentRepository) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		agentID := chi.URLParam(r, "agentId")
 
-	// TODO: Implement agent status retrieval
-	_ = agentID
+		// TODO: Implement agent status retrieval
+		_ = agentID
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]interface{}{})
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]interface{}{})
+	}
 }
 
 // handleDrainAgent handles POST /agents/{agentId}/drain
@@ -74,13 +119,15 @@ func handleGetAgentStatus(w http.ResponseWriter, r *http.Request) {
 // @Success      200      {string}  string  "OK"
 // @Failure      404      {string}  string  "Agent not found"
 // @Router       /agents/{agentId}/drain [post]
-func handleDrainAgent(w http.ResponseWriter, r *http.Request) {
-	agentID := chi.URLParam(r, "agentId")
+func handleDrainAgent(repo repository.IAgentRepository) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		agentID := chi.URLParam(r, "agentId")
 
-	// TODO: Implement agent drain logic (stop taking new work)
-	_ = agentID
+		// TODO: Implement agent drain logic (stop taking new work)
+		_ = agentID
 
-	w.WriteHeader(http.StatusOK)
+		w.WriteHeader(http.StatusOK)
+	}
 }
 
 // handleResumeAgent handles POST /agents/{agentId}/resume
@@ -93,12 +140,14 @@ func handleDrainAgent(w http.ResponseWriter, r *http.Request) {
 // @Success      200      {string}  string  "OK"
 // @Failure      404      {string}  string  "Agent not found"
 // @Router       /agents/{agentId}/resume [post]
-func handleResumeAgent(w http.ResponseWriter, r *http.Request) {
-	agentID := chi.URLParam(r, "agentId")
+func handleResumeAgent(repo repository.IAgentRepository) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		agentID := chi.URLParam(r, "agentId")
 
-	// TODO: Implement agent resume logic
-	_ = agentID
+		// TODO: Implement agent resume logic
+		_ = agentID
 
-	w.WriteHeader(http.StatusOK)
+		w.WriteHeader(http.StatusOK)
+	}
 }
 

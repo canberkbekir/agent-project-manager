@@ -2,7 +2,7 @@ api:
   addr: ":3333"
 
 state:
-  sqlitePath: "data/state.db"
+  connectionString: "postgres://user:password@localhost:5432/agent_project_manager?sslmode=disable"
 
 queue:
   workers: 2
@@ -32,3 +32,5 @@ obs:
   metrics:
     enabled: true      # Enable OpenTelemetry metrics
     endpoint: "localhost:4318"        # OTLP endpoint (e.g., "localhost:4318" for HTTP, "none" to disable)
+    prometheusEnabled: true  # Enable Prometheus metrics endpoint for Grafana (default: false)
+    prometheusPath: "/metrics"       # HTTP path for Prometheus metrics endpoint (default: "/metrics")

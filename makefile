@@ -48,11 +48,11 @@ build: build-agentd build-agentctl
 
 build-agentd:
 	@$(MKDIR_P)
-	$(GO) build $(GOFLAGS) -ldflags "$(LDFLAGS)" -o $(AGENTD_BIN) $(AGENTD_PKG)
+	CGO_ENABLED=1 $(GO) build $(GOFLAGS) -ldflags "$(LDFLAGS)" -o $(AGENTD_BIN) $(AGENTD_PKG)
 
 build-agentctl:
 	@$(MKDIR_P)
-	$(GO) build $(GOFLAGS) -ldflags "$(LDFLAGS)" -o $(AGENTCTL_BIN) $(AGENTCTL_PKG)
+	CGO_ENABLED=1 $(GO) build $(GOFLAGS) -ldflags "$(LDFLAGS)" -o $(AGENTCTL_BIN) $(AGENTCTL_PKG)
 
 run-agentd:
 	$(GO) run $(GOFLAGS) $(AGENTD_PKG) --config $(CONFIG)

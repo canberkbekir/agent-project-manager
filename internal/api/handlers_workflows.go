@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"agent-project-manager/internal/repository"
 )
 
 // handleListWorkflows handles GET /workflows
@@ -15,11 +16,34 @@ import (
 // @Produce      json
 // @Success      200  {object}  WorkflowListResponse
 // @Router       /workflows [get]
-func handleListWorkflows(w http.ResponseWriter, r *http.Request) {
-	// TODO: Implement workflow listing logic
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode([]interface{}{})
+func handleListWorkflows(repo repository.IWorkflowRepository) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Get workflows from repository
+		stateWorkflows, err := repo.ListWorkflows()
+		if err != nil {
+			http.Error(w, "Failed to list workflows: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		// Convert state models to API models
+		workflows := make([]Workflow, len(stateWorkflows))
+		for i, sw := range stateWorkflows {
+			workflows[i] = Workflow{
+				Name:        sw.Name,
+				Description: sw.Description,
+				Schema:      map[string]interface{}(sw.Schema),
+				Version:     sw.Version,
+			}
+		}
+
+		response := WorkflowListResponse{
+			Workflows: workflows,
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(response)
+	}
 }
 
 // handleGetWorkflow handles GET /workflows/{name}
@@ -32,15 +56,29 @@ func handleListWorkflows(w http.ResponseWriter, r *http.Request) {
 // @Success      200    {object}  Workflow
 // @Failure      404    {string}  string  "Workflow not found"
 // @Router       /workflows/{name} [get]
-func handleGetWorkflow(w http.ResponseWriter, r *http.Request) {
-	name := chi.URLParam(r, "name")
+func handleGetWorkflow(repo repository.IWorkflowRepository) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		name := chi.URLParam(r, "name")
 
-	// TODO: Implement workflow schema/metadata retrieval
-	_ = name
+		// Get workflow from repository
+		sw, err := repo.GetWorkflow(name)
+		if err != nil {
+			http.Error(w, "Workflow not found", http.StatusNotFound)
+			return
+		}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]interface{}{})
+		// Convert state model to API model
+		workflow := Workflow{
+			Name:        sw.Name,
+			Description: sw.Description,
+			Schema:      map[string]interface{}(sw.Schema),
+			Version:     sw.Version,
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(workflow)
+	}
 }
 
 // handleValidateWorkflow handles POST /workflows/validate
@@ -53,21 +91,36 @@ func handleGetWorkflow(w http.ResponseWriter, r *http.Request) {
 // @Success      200       {object}  ValidateWorkflowResponse
 // @Failure      400       {string}  string  "Invalid request"
 // @Router       /workflows/validate [post]
-func handleValidateWorkflow(w http.ResponseWriter, r *http.Request) {
-	var req ValidateWorkflowRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
+func handleValidateWorkflow(repo repository.IWorkflowRepository) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req ValidateWorkflowRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			return
+		}
 
-	// TODO: Implement workflow validation logic
-	response := ValidateWorkflowResponse{
-		Valid:  true,
-		Errors: []string{},
-	}
+		// Get workflow to validate against
+		_, err := repo.GetWorkflow(req.Workflow)
+		if err != nil {
+			response := ValidateWorkflowResponse{
+				Valid:  false,
+				Errors: []string{"Workflow not found"},
+			}
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode(response)
+			return
+		}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
+		// TODO: Implement workflow validation logic against schema
+		response := ValidateWorkflowResponse{
+			Valid:  true,
+			Errors: []string{},
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(response)
+	}
 }
 

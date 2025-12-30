@@ -30,7 +30,7 @@ type AuthConfig struct {
 }
 
 type StateConfig struct {
-	SqlitePath string `yaml:"sqlitePath"`
+	ConnectionString string `yaml:"connectionString"`
 }
 type QueueConfig struct {
 	Workers int `yaml:"workers"`
@@ -71,8 +71,10 @@ type TracingConfig struct {
 }
 
 type MetricsConfig struct {
-	Endpoint string `yaml:"endpoint"` // OTLP endpoint (e.g., "localhost:4318"), empty or "none" to disable
-	Enabled  bool   `yaml:"enabled"`  // Enable/disable metrics (default: false)
+	Endpoint          string `yaml:"endpoint"`          // OTLP endpoint (e.g., "localhost:4318"), empty or "none" to disable
+	PrometheusEnabled bool   `yaml:"prometheusEnabled"` // Enable Prometheus metrics endpoint for Grafana (default: false)
+	PrometheusPath    string `yaml:"prometheusPath"`    // HTTP path for Prometheus metrics endpoint (default: "/metrics")
+	Enabled           bool   `yaml:"enabled"`          // Enable/disable metrics (default: false)
 }
 
 // Load loads from the fixed default path.

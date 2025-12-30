@@ -7,15 +7,22 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	httpSwagger "github.com/swaggo/http-swagger"
+	
+	"agent-project-manager/internal/obs"
+	"agent-project-manager/internal/repository"
+	"agent-project-manager/internal/state"
 )
 
 var (
 	// EnableTracing controls whether OpenTelemetry tracing middleware is applied
 	EnableTracing bool
+	// PrometheusMetricsPath is the HTTP path for Prometheus metrics endpoint (empty to disable)
+	PrometheusMetricsPath string
 )
 
 // Router returns a new HTTP router with all routes configured.
-func Router() http.Handler {
+// It accepts a repository for database operations.
+func Router(repo state.Repository) http.Handler {
 	r := chi.NewRouter()
 
 	// Middleware
@@ -43,6 +50,11 @@ func Router() http.Handler {
 	// Swagger UI
 	r.Get("/swagger/*", httpSwagger.Handler())
 
+	// Prometheus metrics endpoint (for Grafana)
+	if PrometheusMetricsPath != "" {
+		r.Get(PrometheusMetricsPath, obs.GetPrometheusHandler().ServeHTTP)
+	}
+
 	// API v1 routes
 	r.Route("/v1", func(r chi.Router) {
 		// System endpoints
@@ -57,60 +69,70 @@ func Router() http.Handler {
 			r.Post("/logout", handleLogout)
 		})
 
+		// Create repositories from database connection
+		db := repo.GetDB()
+		jobRepo := repository.NewJobRepository(db)
+		runRepo := repository.NewRunRepository(db)
+		agentRepo := repository.NewAgentRepository(db)
+		stepRepo := repository.NewStepRepository(db)
+		workflowRepo := repository.NewWorkflowRepository(db)
+		artifactRepo := repository.NewArtifactRepository(db)
+		queueRepo := repository.NewQueueRepository(db)
+
 		// Jobs endpoints
 		r.Route("/jobs", func(r chi.Router) {
-			r.Post("/", handleCreateJob)
-			r.Get("/", handleListJobs)
-			r.Get("/{jobId}", handleGetJob)
-			r.Delete("/{jobId}", handleDeleteJob)
-			r.Post("/{jobId}/retry", handleRetryJob)
-			r.Get("/{jobId}/events", handleJobEvents)
-			r.Get("/{jobId}/logs", handleJobLogs)
-			r.Get("/{jobId}/result", handleJobResult)
+			r.Post("/", handleCreateJob(jobRepo))
+			r.Get("/", handleListJobs(jobRepo))
+			r.Get("/{jobId}", handleGetJob(jobRepo))
+			r.Delete("/{jobId}", handleDeleteJob(jobRepo))
+			r.Post("/{jobId}/retry", handleRetryJob(jobRepo))
+			r.Get("/{jobId}/events", handleJobEvents(jobRepo))
+			r.Get("/{jobId}/logs", handleJobLogs(jobRepo))
+			r.Get("/{jobId}/result", handleJobResult(jobRepo))
 
 			// Job steps
-			r.Get("/{jobId}/steps", handleJobSteps)
-			r.Get("/{jobId}/steps/{stepId}", handleGetStep)
-			r.Get("/{jobId}/steps/{stepId}/logs", handleStepLogs)
+			r.Get("/{jobId}/steps", handleJobSteps(stepRepo))
+			r.Get("/{jobId}/steps/{stepId}", handleGetStep(stepRepo))
+			r.Get("/{jobId}/steps/{stepId}/logs", handleStepLogs(stepRepo))
 		})
 
 		// Runs endpoints
 		r.Route("/runs", func(r chi.Router) {
-			r.Post("/", handleCreateRun)
-			r.Get("/", handleListRuns)
-			r.Get("/{runId}", handleGetRun)
-			r.Delete("/{runId}", handleDeleteRun)
+			r.Post("/", handleCreateRun(runRepo))
+			r.Get("/", handleListRuns(runRepo))
+			r.Get("/{runId}", handleGetRun(runRepo))
+			r.Delete("/{runId}", handleDeleteRun(runRepo))
 		})
 
 		// Workflows endpoints
 		r.Route("/workflows", func(r chi.Router) {
-			r.Get("/", handleListWorkflows)
-			r.Get("/{name}", handleGetWorkflow)
-			r.Post("/validate", handleValidateWorkflow)
+			r.Get("/", handleListWorkflows(workflowRepo))
+			r.Get("/{name}", handleGetWorkflow(workflowRepo))
+			r.Post("/validate", handleValidateWorkflow(workflowRepo))
 		})
 
 		// Artifacts endpoints
 		r.Route("/artifacts", func(r chi.Router) {
-			r.Get("/", handleListArtifacts)
-			r.Get("/{artifactId}", handleGetArtifact)
-			r.Get("/{artifactId}/download", handleDownloadArtifact)
-			r.Delete("/{artifactId}", handleDeleteArtifact)
+			r.Get("/", handleListArtifacts(artifactRepo))
+			r.Get("/{artifactId}", handleGetArtifact(artifactRepo))
+			r.Get("/{artifactId}/download", handleDownloadArtifact(artifactRepo))
+			r.Delete("/{artifactId}", handleDeleteArtifact(artifactRepo))
 		})
 
 		// Agents endpoints
 		r.Route("/agents", func(r chi.Router) {
-			r.Get("/", handleListAgents)
-			r.Get("/{agentId}", handleGetAgent)
-			r.Get("/{agentId}/status", handleGetAgentStatus)
-			r.Post("/{agentId}/drain", handleDrainAgent)
-			r.Post("/{agentId}/resume", handleResumeAgent)
+			r.Get("/", handleListAgents(agentRepo))
+			r.Get("/{agentId}", handleGetAgent(agentRepo))
+			r.Get("/{agentId}/status", handleGetAgentStatus(agentRepo))
+			r.Post("/{agentId}/drain", handleDrainAgent(agentRepo))
+			r.Post("/{agentId}/resume", handleResumeAgent(agentRepo))
 		})
 
 		// Queue endpoints
 		r.Route("/queue", func(r chi.Router) {
-			r.Get("/", handleGetQueue)
-			r.Get("/items", handleListQueueItems)
-			r.Post("/requeue", handleRequeue)
+			r.Get("/", handleGetQueue(queueRepo))
+			r.Get("/items", handleListQueueItems(queueRepo))
+			r.Post("/requeue", handleRequeue(queueRepo))
 		})
 	})
 
