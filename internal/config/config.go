@@ -77,9 +77,15 @@ type MetricsConfig struct {
 	Enabled           bool   `yaml:"enabled"`          // Enable/disable metrics (default: false)
 }
 
-// Load loads from the fixed default path.
+// Load loads configuration from file.
+// If CONFIG_PATH environment variable is set, it uses that path.
+// Otherwise, it falls back to the default path (configs/config.yaml).
 func Load() (Config, error) {
-	return loadFrom(DefaultPath)
+	configPath := os.Getenv("CONFIG_PATH")
+	if configPath == "" {
+		configPath = DefaultPath
+	}
+	return loadFrom(configPath)
 }
 
 func loadFrom(path string) (Config, error) {
@@ -91,6 +97,39 @@ func loadFrom(path string) (Config, error) {
 	if err := yaml.Unmarshal(b, &c); err != nil {
 		return c, err
 	}
+	
+	// Override with environment variables if set
+	if envAddr := os.Getenv("API_ADDR"); envAddr != "" {
+		c.API.Addr = envAddr
+	}
+	if envConnStr := os.Getenv("STATE_CONNECTIONSTRING"); envConnStr != "" {
+		c.State.ConnectionString = envConnStr
+	}
+	if envLogLevel := os.Getenv("LOGGER_LEVEL"); envLogLevel != "" {
+		c.Logger.Level = envLogLevel
+	}
+	if envLogFormat := os.Getenv("LOGGER_FORMAT"); envLogFormat != "" {
+		c.Logger.Format = envLogFormat
+	}
+	if envTracingEnabled := os.Getenv("OBS_TRACING_ENABLED"); envTracingEnabled != "" {
+		c.Obs.Tracing.Enabled = envTracingEnabled == "true"
+	}
+	if envTracingEndpoint := os.Getenv("OBS_TRACING_ENDPOINT"); envTracingEndpoint != "" {
+		c.Obs.Tracing.Endpoint = envTracingEndpoint
+	}
+	if envMetricsEnabled := os.Getenv("OBS_METRICS_ENABLED"); envMetricsEnabled != "" {
+		c.Obs.Metrics.Enabled = envMetricsEnabled == "true"
+	}
+	if envMetricsEndpoint := os.Getenv("OBS_METRICS_ENDPOINT"); envMetricsEndpoint != "" {
+		c.Obs.Metrics.Endpoint = envMetricsEndpoint
+	}
+	if envPrometheusEnabled := os.Getenv("OBS_METRICS_PROMETHEUSENABLED"); envPrometheusEnabled != "" {
+		c.Obs.Metrics.PrometheusEnabled = envPrometheusEnabled == "true"
+	}
+	if envPrometheusPath := os.Getenv("OBS_METRICS_PROMETHEUSPATH"); envPrometheusPath != "" {
+		c.Obs.Metrics.PrometheusPath = envPrometheusPath
+	}
+	
 	return c, nil
 }
 

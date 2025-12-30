@@ -32,16 +32,8 @@ services:
       dockerfile: docker/api/Dockerfile
     container_name: agent-project-manager-api
     environment:
-      - API_ADDR=:3333
-      - STATE_CONNECTIONSTRING=postgres://user:password@database:5432/agent_project_manager?sslmode=disable
-      - LOGGER_LEVEL=info
-      - LOGGER_FORMAT=json
-      - OBS_TRACING_ENABLED=true
-      - OBS_TRACING_ENDPOINT=localhost:4318
-      - OBS_METRICS_ENABLED=true
-      - OBS_METRICS_ENDPOINT=localhost:4318
-      - OBS_METRICS_PROMETHEUSENABLED=true
-      - OBS_METRICS_PROMETHEUSPATH=/metrics
+      # Use Docker-specific config file
+      - CONFIG_PATH=/app/configs/config.docker.yaml
     ports:
       - "3333:3333"
     volumes:
