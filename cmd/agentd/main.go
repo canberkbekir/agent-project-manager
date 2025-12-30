@@ -39,6 +39,12 @@ import (
 const shutdownTimeout = 5 * time.Second
 
 func main() {
+	// Log config path before loading (for debugging)
+	configPath := os.Getenv("CONFIG_PATH")
+	if configPath == "" {
+		configPath = "configs/config.yaml"
+	}
+	_, _ = fmt.Fprintf(os.Stdout, "agentd: loading config from: %s\n", configPath)
 
 	cfg, err := config.Load()
 	if err != nil {
@@ -50,13 +56,13 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Log connection string before logger init (for debugging)
+	_, _ = fmt.Fprintf(os.Stdout, "agentd: database connection string: %s\n", maskConnectionString(cfg.State.ConnectionString))
+	_, _ = fmt.Fprintf(os.Stdout, "agentd: config file loaded successfully\n")
+	_, _ = fmt.Fprintf(os.Stdout, "agentd: API addr: %s\n", cfg.API.Addr)
+
 	logger.Init()
 
-	// Log config path for debugging
-	configPath := os.Getenv("CONFIG_PATH")
-	if configPath == "" {
-		configPath = "configs/config.yaml"
-	}
 	logger.Infof("agentd: loaded config from %s", configPath)
 	logger.Infof("agentd: database connection string: %s", maskConnectionString(cfg.State.ConnectionString))
 

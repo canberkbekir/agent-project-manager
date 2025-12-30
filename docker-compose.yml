@@ -32,13 +32,47 @@ services:
       dockerfile: docker/api/Dockerfile
     container_name: agent-project-manager-api
     environment:
-      # Use Docker-specific config file
-      - CONFIG_PATH=/app/configs/config.docker.yaml
+      # API Configuration
+      - API_ADDR=:3333
+      
+      # Database Configuration (12-Factor: config in environment)
+      - STATE_CONNECTION_STRING=postgres://user:password@database:5432/agent_project_manager?sslmode=disable
+      # Alternative: DATABASE_URL (common convention)
+      # - DATABASE_URL=postgres://user:password@database:5432/agent_project_manager?sslmode=disable
+      
+      # Queue Configuration
+      - QUEUE_WORKERS=2
+      
+      # Artifacts Configuration
+      - ARTIFACTS_WORK_DIR=/app/data/workdir
+      
+      # Logger Configuration
+      - LOGGER_LEVEL=info
+      - LOGGER_FORMAT=json
+      - LOGGER_OUTPUT=stdout
+      
+      # Observability - Tracing
+      - OBS_TRACING_ENABLED=true
+      - OBS_TRACING_ENDPOINT=localhost:4318
+      
+      # Observability - Metrics
+      - OBS_METRICS_ENABLED=true
+      - OBS_METRICS_ENDPOINT=localhost:4318
+      - OBS_METRICS_PROMETHEUS_ENABLED=true
+      - OBS_METRICS_PROMETHEUS_PATH=/metrics
+      
+      # LLM Configuration (optional - can be overridden)
+      - LLM_PROVIDER=ollama
+      - LLM_OLLAMA_BASE_URL=http://host.docker.internal:11434
+      - LLM_OLLAMA_MODEL=qwen2.5-coder:7b
     ports:
       - "3333:3333"
     volumes:
       - api_data:/app/data
-      - ./configs:/app/configs:ro
+      # Config files are optional - only for development/testing
+      # Production should use environment variables only
+      # Uncomment the line below if you want to use config files instead of environment variables
+      # - ./configs:/app/configs:ro
     depends_on:
       database:
         condition: service_healthy
