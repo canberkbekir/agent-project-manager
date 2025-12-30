@@ -9,8 +9,8 @@ WORKDIR /etc/prometheus
 COPY docker/prometheus/prometheus.yml /etc/prometheus/prometheus.yml
 
 # Create directory for data
-RUN mkdir -p /prometheus && \
-    chown -R nobody:nobody /etc/prometheus /prometheus
+# Prometheus image already handles permissions correctly
+RUN mkdir -p /prometheus
 
 # Expose Prometheus port
 EXPOSE 9090
