@@ -1,0 +1,57 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Build artifacts
+bin/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test files
+*_test.go
+*.test
+
+# Documentation
+*.md
+docs/
+LICENSE.md
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+docker-compose.yml
+docker-compose.*.yml
+.dockerignore
+
+# Data directories
+data/
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+logs/
+
+# Environment
+.env
+.env.local
+*.local.yaml
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+

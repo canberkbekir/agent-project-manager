@@ -1,0 +1,44 @@
+# Docker configuration for agent-project-manager
+# This file should be used when running in Docker containers
+# Copy this to config.yaml or mount it as a volume
+
+api:
+  addr: ":3333"
+
+state:
+  # Use 'database' as hostname when running in Docker Compose
+  connectionString: "postgres://user:password@database:5432/agent_project_manager?sslmode=disable"
+
+queue:
+  workers: 2
+
+artifacts:
+  workDir: "/app/data/workdir"
+
+llm:
+  provider: "ollama" # or "openai"
+  openai:
+    apiKey: ""
+    model: "gpt-4o-mini"
+  ollama:
+    # If Ollama is running in Docker, use the service name
+    # If running on host, use host.docker.internal (Mac/Windows) or host IP (Linux)
+    baseURL: "http://host.docker.internal:11434"
+    model: "qwen2.5-coder:7b"
+
+logger:
+  level: "info"        # debug, info, warn, error, fatal
+  format: "json"       # Use json in Docker for better log aggregation
+  output: "stdout"     # stdout works well with Docker logs
+  reportCaller: false
+
+obs:
+  tracing:
+    enabled: true
+    endpoint: "localhost:4318"        # OTLP endpoint
+  metrics:
+    enabled: true
+    endpoint: "localhost:4318"        # OTLP endpoint
+    prometheusEnabled: true  # Enable Prometheus metrics endpoint for Grafana
+    prometheusPath: "/metrics"       # HTTP path for Prometheus metrics endpoint
+
